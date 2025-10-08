@@ -32,59 +32,55 @@ Install common dependencies:
 ```bash
 sudo apt update
 sudo apt install python3 python3-pip -y
+```
+
+---
 
 # 🅰️ Method 1: Apache Kafka
-1️⃣ Install Kafka
+
+### 1️⃣ Install Kafka
+
 ```bash
-
-You said:
-Goal: Understand basic streaming concepts and simple data flows.   Tasks   Set up a local streaming tool    Install Apache Kafka (or use a lightweight Python socket stream).   Produce and consume data    Write a small Python program that sends random sensor readings (e.g., temperature).   Write another program that prints every message as it arrives.   Windowed Counting    Count how many messages arrive every 10 seconds and display the count.  using ubuntu
-ChatGPT said:
-Perfect 👍 — this is a great beginner project to understand streaming data using Python and Kafka (or sockets) on Ubuntu.
-Let’s go step-by-step so you can easily set up and run everything locally.
-
-🧭 Overview
-You’ll do three main things:
-
-Set up a local streaming tool — Apache Kafka or simple Python sockets.
-
-Produce and consume data — a sensor simulator sends random readings; a listener prints them.
-
-Windowed counting — count how many messages arrive every 10 seconds.
-
-We’ll do it in two variants:
-
-(A) Kafka-based (real streaming framework)
-
-(B) Python socket-based (lightweight and simple)
-
-🧩 A. Kafka-Based Streaming Setup
-1️⃣ Install Kafka on Ubuntu
-Run these commands in your terminal:
-
-sudo apt update
 sudo apt install openjdk-11-jre -y
-Download and extract Kafka:
-
 wget https://downloads.apache.org/kafka/3.8.0/kafka_2.13-3.8.0.tgz
 tar -xzf kafka_2.13-3.8.0.tgz
 cd kafka_2.13-3.8.0
-Start Zookeeper (Kafka needs it):
+```
 
+Start **Zookeeper**:
+```bash
 bin/zookeeper-server-start.sh config/zookeeper.properties
-Then open a new terminal tab and start Kafka broker:
+```
 
+Start **Kafka Broker** (in a new terminal):
+```bash
 bin/kafka-server-start.sh config/server.properties
-2️⃣ Create a Kafka Topic
-In a new terminal tab:
+```
 
+---
+
+### 2️⃣ Create Topic
+
+```bash
 cd kafka_2.13-3.8.0
 bin/kafka-topics.sh --create --topic sensor_data --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
-3️⃣ Install Kafka Python client
-pip install kafka-python
-4️⃣ Python Producer (sends random sensor data)
-Save as producer.py:
+```
 
+---
+
+### 3️⃣ Install Kafka Python Library
+
+```bash
+pip install kafka-python
+```
+
+---
+
+### 4️⃣ Producer (Send Sensor Data)
+
+**File:** `producer.py`
+
+```python
 from kafka import KafkaProducer
 import json, random, time
 
@@ -102,12 +98,20 @@ while True:
     producer.send('sensor_data', data)
     print(f"Sent: {data}")
     time.sleep(1)
+```
+
 Run:
-
+```bash
 python3 producer.py
-5️⃣ Python Consumer (prints every message)
-Save as consumer.py:
+```
 
+---
+
+### 5️⃣ Consumer (Receive and Print Messages)
+
+**File:** `consumer.py`
+
+```python
 from kafka import KafkaConsumer
 import json
 
@@ -123,16 +127,20 @@ print("Listening for messages...")
 
 for msg in consumer:
     print(f"Received: {msg.value}")
+```
+
 Run:
-
+```bash
 python3 consumer.py
-You’ll see sensor readings being printed live 🎯
+```
 
-6️⃣ Windowed Counting (every 10 seconds)
-Modify your consumer to count messages in 10-second windows.
+---
 
-Save as windowed_consumer.py:
+### 6️⃣ Windowed Counting (Every 10 Seconds)
 
+**File:** `windowed_consumer.py`
+
+```python
 from kafka import KafkaConsumer
 import json, time
 
@@ -156,15 +164,26 @@ for msg in consumer:
         print(f"Messages in last 10 seconds: {count}")
         start_time = now
         count = 0
+```
+
 Run:
-
+```bash
 python3 windowed_consumer.py
-🪶 B. Lightweight Alternative: Python Socket Stream (no Kafka)
-If you don’t want to install Kafka, use this simple socket method.
+```
 
-1️⃣ Producer (server)
-Save as socket_server.py:
+---
 
+# 🅱️ Method 2: Python Socket Stream (Lightweight)
+
+This version skips Kafka and uses a simple **TCP socket** for streaming data locally.
+
+---
+
+### 1️⃣ Socket Producer (Server)
+
+**File:** `socket_server.py`
+
+```python
 import socket, time, random, json
 
 HOST = 'localhost'
@@ -187,9 +206,20 @@ while True:
     conn.sendall((json.dumps(data) + "\n").encode('utf-8'))
     print(f"Sent: {data}")
     time.sleep(1)
-2️⃣ Consumer (client)
-Save as socket_client.py:
+```
 
+Run in one terminal:
+```bash
+python3 socket_server.py
+```
+
+---
+
+### 2️⃣ Socket Consumer (Client)
+
+**File:** `socket_client.py`
+
+```python
 import socket, json, time
 
 HOST = 'localhost'
@@ -201,8 +231,8 @@ client.connect((HOST, PORT))
 print("Connected to stream. Receiving data...")
 start_time = time.time()
 count = 0
-
 buffer = ""
+
 while True:
     chunk = client.recv(1024).decode('utf-8')
     buffer += chunk
@@ -215,71 +245,64 @@ while True:
             print(f"Messages in last 10 seconds: {count}")
             count = 0
             start_time = time.time()
-Run in two terminals:
+```
 
-python3 socket_server.py
+Run in another terminal:
+```bash
 python3 socket_client.py
-✅ Summary
-Task	Kafka Method	Socket Method
-Setup	Install Kafka	Built-in Python
-Producer	producer.py	socket_server.py
-Consumer	consumer.py	socket_client.py
-Windowed Count	windowed_consumer.py	included in client
-Would you like me to provide a single combined Python file (no Kafka, just sockets) that runs both producer and consumer in the same script for demo/testing?
-
-You said:
-create the read me file for this project using both methods in .md format
-ChatGPT said:
-Here’s a clean, professional README.md file you can include in your project folder.
-It documents both the Kafka-based and Socket-based streaming setups in Markdown format.
-
-# 🌊 Real-Time Streaming Data Demo (Python + Kafka / Socket)
-
-This project demonstrates **basic streaming concepts** and **simple data flows** using two different approaches:
-
-1. **Apache Kafka** – a distributed streaming platform.
-2. **Python Sockets** – a lightweight alternative for quick testing.
-
-The project simulates **real-time sensor readings** (like temperature) and shows:
-- Live data production and consumption
-- Continuous message printing
-- Windowed counting (messages every 10 seconds)
+```
 
 ---
 
-## 🧭 Project Goals
+# 🧪 Expected Output
 
-- Understand fundamental **streaming data** concepts.
-- Learn to **produce** and **consume** real-time messages.
-- Implement **windowed counting** logic (e.g., messages per 10 seconds).
-- Compare a **Kafka-based** solution vs. a **simple socket-based** one.
+```
+Sent: {'sensor_id': 3, 'temperature': 31.24, 'timestamp': 1728388273.12}
+Received: {'sensor_id': 3, 'temperature': 31.24, 'timestamp': 1728388273.12}
+Messages in last 10 seconds: 10
+```
 
 ---
 
-## ⚙️ Requirements
+# 🧱 Project Structure
 
-- **Ubuntu (Linux)**
-- **Python 3.8+**
-- **pip**
-- **Java (for Kafka only)**
+```
+streaming-demo/
+│
+├── README.md
+├── producer.py
+├── consumer.py
+├── windowed_consumer.py
+├── socket_server.py
+└── socket_client.py
+```
 
-Install common dependencies:
-```bash
-sudo apt update
-sudo apt install python3 python3-pip -y
-🅰️ Method 1: Apache Kafka
-1️⃣ Install Kafka
-```bash
-sudo apt install openjdk-11-jre -y
-wget https://downloads.apache.org/kafka/3.8.0/kafka_2.13-3.8.0.tgz
-tar -xzf kafka_2.13-3.8.0.tgz
-cd kafka_2.13-3.8.0
+---
 
-Start Zookeeper:
-```bash
-bin/zookeeper-server-start.sh config/zookeeper.properties
+# 🧠 Concepts Covered
 
-Start Kafka Broker (in a new terminal):
-```bash
-bin/kafka-server-start.sh config/server.properties
+- **Streaming Data Pipelines**
+- **Producer–Consumer Architecture**
+- **Message Serialization (JSON)**
+- **Windowed Computation**
+- **Real-Time Analytics**
 
+---
+
+# 🏁 Summary
+
+| Feature | Kafka Method | Socket Method |
+|----------|---------------|---------------|
+| Complexity | Moderate | Simple |
+| Realism | ✅ Industry-standard | ⚡ Quick demo |
+| Setup | Requires Kafka | Pure Python |
+| Throughput | High | Limited |
+| Ideal For | Learning Kafka & Streaming | Small demos or offline labs |
+
+---
+
+# 🧑‍💻 Author
+
+**Aleema Saleem**  
+MS Data Science — NED University  
+Project: *Understanding Streaming Data Concepts in Python*
